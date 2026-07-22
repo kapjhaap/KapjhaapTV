@@ -1,0 +1,6 @@
+{
+  "name": "KapjhaapTV",
+  "description": "KapjhaapTV live streaming platform with CORS proxy server for seamless HLS m3u8 stream playback.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
