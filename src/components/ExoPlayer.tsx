@@ -41,6 +41,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
 
   // Connection & Retry tracking
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const playbackStartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const networkRetryCountRef = useRef<number>(0);
   const mediaRetryCountRef = useRef<number>(0);
@@ -241,6 +242,9 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     if (connectionTimeoutRef.current) {
       clearTimeout(connectionTimeoutRef.current);
     }
+    if (playbackStartTimeoutRef.current) {
+      clearTimeout(playbackStartTimeoutRef.current);
+    }
     if (reloadTimeoutRef.current) {
       clearTimeout(reloadTimeoutRef.current);
     }
@@ -279,6 +283,19 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       }
       return false;
     };
+
+    playbackStartTimeoutRef.current = setTimeout(() => {
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && !video.paused) {
+        return;
+      }
+
+      if (tryNextSource('Stream loaded but did not start playback on this browser.')) {
+        if (hlsRef.current) {
+          hlsRef.current.destroy();
+          hlsRef.current = null;
+        }
+      }
+    }, 16000);
 
     // Guard timeout to prevent infinite "Connecting..." spinning on dead endpoints.
     connectionTimeoutRef.current = setTimeout(() => {
@@ -508,6 +525,9 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       if (connectionTimeoutRef.current) {
         clearTimeout(connectionTimeoutRef.current);
       }
+      if (playbackStartTimeoutRef.current) {
+        clearTimeout(playbackStartTimeoutRef.current);
+      }
       if (reloadTimeoutRef.current) {
         clearTimeout(reloadTimeoutRef.current);
       }
@@ -685,6 +705,8 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
   };
 
   const handleVideoPointerUp = (e: React.PointerEvent<HTMLVideoElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (e.pointerType === 'mouse' || e.pointerType === 'touch' || e.pointerType === 'pen') {
       toggleControlsVisibility();
     }
@@ -763,6 +785,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       <video
         ref={videoRef}
         onPointerUp={handleVideoPointerUp}
+        onClick={(e) => e.preventDefault()}
         onTimeUpdate={updateProgress}
         onProgress={updateProgress}
         onLoadedMetadata={updateProgress}
@@ -772,6 +795,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         onPlaying={() => {
           setIsBuffering(false);
           if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
+          if (playbackStartTimeoutRef.current) clearTimeout(playbackStartTimeoutRef.current);
         }}
         style={getVideoObjectFit()}
         className={`w-full h-full cursor-pointer transition-all duration-300 ${
