@@ -31,6 +31,13 @@ interface ExoPlayerProps {
   onSelectPrevChannel?: () => void;
 }
 
+interface PlaybackAttempt {
+  rawUrl: string;
+  url: string;
+  mode: string;
+  wrapHls: boolean;
+}
+
 export const ExoPlayer: React.FC<ExoPlayerProps> = ({
   channel,
   proxyMode = 'cors_proxy',
@@ -212,30 +219,146 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     }
   };
 
-  // Generate resolved video URL based on proxy mode
-  const getPlayableUrl = useCallback((rawUrl: string) => {
-    if (channel.useDirectStream) {
-      return rawUrl;
+  const normalizeHeaderName = (key: string) => {
+    const normalized = key.trim().toLowerCase();
+    if (normalized === 'ua' || normalized === 'user-agent' || normalized === 'useragent') return 'User-Agent';
+    if (normalized === 'referrer' || normalized === 'referer') return 'Referer';
+    if (normalized === 'origin') return 'Origin';
+    return key.trim();
+  };
+
+  const parseStreamSource = (rawUrl: string) => {
+    const [urlPart, headerPart] = rawUrl.split('|');
+    const inlineHeaders: Record<string, string> = {};
+
+    if (headerPart) {
+      new URLSearchParams(headerPart).forEach((value, key) => {
+        const headerName = normalizeHeaderName(key);
+        if (headerName && value) inlineHeaders[headerName] = value;
+      });
     }
 
-    if (proxyMode === 'cors_proxy') {
-      let proxyEndpoint = `/api/proxy?url=${encodeURIComponent(rawUrl)}`;
-      if (channel.httpHeaders) {
-        proxyEndpoint += `&headers=${encodeURIComponent(JSON.stringify(channel.httpHeaders))}`;
-      }
-      if (shouldWrapSourceAsHls(rawUrl)) {
-        proxyEndpoint += '&wrap=hls';
-      }
-      if (channel.forceVideoOnly) {
-        proxyEndpoint += '&videoOnly=1';
-      }
-      return proxyEndpoint;
+    return {
+      url: urlPart.trim(),
+      inlineHeaders,
+    };
+  };
+
+  const isLikelyHlsPlaylist = (rawUrl: string) => {
+    try {
+      const parsed = new URL(rawUrl);
+      return /\.(m3u8|m3u)$/i.test(parsed.pathname);
+    } catch {
+      return /\.(m3u8|m3u)(\?|$)/i.test(rawUrl);
     }
-    return rawUrl;
-  }, [channel.forceHlsWrap, channel.forceVideoOnly, channel.httpHeaders, channel.useDirectStream, proxyMode]);
+  };
+
+  const isHttpsUrl = (rawUrl: string) => {
+    try {
+      return new URL(rawUrl).protocol === 'https:';
+    } catch {
+      return /^https:/i.test(rawUrl);
+    }
+  };
+
+  const getProxiedUrl = useCallback((rawUrl: string, options: { wrapHls?: boolean; videoOnly?: boolean } = {}) => {
+    const parsedSource = parseStreamSource(rawUrl);
+    const mergedHeaders = {
+      ...parsedSource.inlineHeaders,
+      ...(channel.httpHeaders || {}),
+    };
+    let proxyEndpoint = `/api/proxy?url=${encodeURIComponent(parsedSource.url)}`;
+    if (Object.keys(mergedHeaders).length > 0) {
+      proxyEndpoint += `&headers=${encodeURIComponent(JSON.stringify(mergedHeaders))}`;
+    }
+    if (options.wrapHls) {
+      proxyEndpoint += '&wrap=hls';
+    }
+    if (options.videoOnly) {
+      proxyEndpoint += '&videoOnly=1';
+    }
+    return proxyEndpoint;
+  }, [channel.httpHeaders]);
+
+  const addPlaybackAttempt = (attempts: PlaybackAttempt[], seen: Set<string>, attempt: PlaybackAttempt) => {
+    const key = `${attempt.mode}|${attempt.url}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      attempts.push(attempt);
+    }
+  };
+
+  const getPlaybackAttempts = useCallback(() => {
+    const attempts: PlaybackAttempt[] = [];
+    const seen = new Set<string>();
+    const sources = getChannelSources();
+
+    sources.forEach((rawUrl) => {
+      const parsedSource = parseStreamSource(rawUrl);
+      const playableRawUrl = parsedSource.url;
+      const wrapHls = shouldWrapSourceAsHls(playableRawUrl);
+      const likelyHls = isLikelyHlsPlaylist(playableRawUrl);
+      const tryDirectFirst = channel.useDirectStream || proxyMode !== 'cors_proxy';
+
+      if (tryDirectFirst) {
+        addPlaybackAttempt(attempts, seen, {
+          rawUrl: playableRawUrl,
+          url: playableRawUrl,
+          mode: 'direct',
+          wrapHls: false,
+        });
+      }
+
+      if (proxyMode === 'cors_proxy') {
+        addPlaybackAttempt(attempts, seen, {
+          rawUrl,
+          url: getProxiedUrl(rawUrl, { wrapHls }),
+          mode: wrapHls ? 'proxy-wrapped-hls' : 'proxy-hls',
+          wrapHls,
+        });
+
+        if (!wrapHls && !likelyHls) {
+          addPlaybackAttempt(attempts, seen, {
+            rawUrl,
+            url: getProxiedUrl(rawUrl, { wrapHls: true }),
+            mode: 'proxy-auto-wrapped-hls',
+            wrapHls: true,
+          });
+        }
+
+        if (wrapHls || channel.forceVideoOnly) {
+          addPlaybackAttempt(attempts, seen, {
+            rawUrl,
+            url: getProxiedUrl(rawUrl, { wrapHls: true, videoOnly: true }),
+            mode: 'proxy-video-only-hls',
+            wrapHls: true,
+          });
+        }
+
+        if (!tryDirectFirst && likelyHls && isHttpsUrl(playableRawUrl)) {
+          addPlaybackAttempt(attempts, seen, {
+            rawUrl: playableRawUrl,
+            url: playableRawUrl,
+            mode: 'direct-hls-fallback',
+            wrapHls: false,
+          });
+        }
+      }
+    });
+
+    return attempts.length ? attempts : [{ rawUrl: channel.streamUrl, url: channel.streamUrl, mode: 'direct', wrapHls: false }];
+  }, [
+    channel.forceVideoOnly,
+    channel.forceHlsWrap,
+    channel.streamUrl,
+    channel.useDirectStream,
+    getChannelSources,
+    getProxiedUrl,
+    proxyMode,
+  ]);
 
   // Load stream in HLS.js or native HTML5 video
-  const loadStream = useCallback(function loadChannelStream(sourceIndex = 0) {
+  const loadStream = useCallback(function loadChannelStream(attemptIndex = 0) {
     const video = videoRef.current;
     if (!video) return;
 
@@ -250,7 +373,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     }
     networkRetryCountRef.current = 0;
     mediaRetryCountRef.current = 0;
-    activeSourceIndexRef.current = sourceIndex;
+    activeSourceIndexRef.current = attemptIndex;
 
     setHasError(false);
     setErrorMessage('');
@@ -260,11 +383,11 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     setCurrentQuality(-1);
     setCurrentAudioTrack(-1);
 
-    const sources = getChannelSources();
-    const rawSourceUrl = sources[sourceIndex] || sources[0] || channel.streamUrl;
-    const streamUrl = getPlayableUrl(rawSourceUrl);
-    const hasBackupSource = sources.length > 1 && sourceIndex < sources.length - 1;
-    const isWrappedTsSource = shouldWrapSourceAsHls(rawSourceUrl);
+    const attempts = getPlaybackAttempts();
+    const playbackAttempt = attempts[attemptIndex] || attempts[0];
+    const streamUrl = playbackAttempt.url;
+    const hasBackupSource = attempts.length > 1 && attemptIndex < attempts.length - 1;
+    const isWrappedTsSource = playbackAttempt.wrapHls;
     const loadStartedAt = Date.now();
 
     // Clean up existing HLS instance
@@ -276,9 +399,9 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     video.load();
 
     const tryNextSource = (message: string) => {
-      if (sources.length > 1 && sourceIndex < sources.length - 1) {
-        setErrorMessage(`${message} Trying backup source ${sourceIndex + 2}/${sources.length}...`);
-        reloadTimeoutRef.current = setTimeout(() => loadChannelStream(sourceIndex + 1), 900);
+      if (hasBackupSource) {
+        setErrorMessage(`${message} Trying ${attempts[attemptIndex + 1].mode} source ${attemptIndex + 2}/${attempts.length}...`);
+        reloadTimeoutRef.current = setTimeout(() => loadChannelStream(attemptIndex + 1), 900);
         return true;
       }
       return false;
@@ -517,7 +640,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       setErrorMessage('HLS video playback is not supported in this browser.');
       setIsBuffering(false);
     }
-  }, [channel.streamUrl, getChannelSources, getPlayableUrl]);
+  }, [getPlaybackAttempts]);
 
   useEffect(() => {
     loadStream(0);
