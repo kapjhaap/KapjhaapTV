@@ -188,10 +188,6 @@ app.get('/api/proxy', async (req, res) => {
     if (!fetchHeaders['Referer'] && !fetchHeaders['referer']) {
       fetchHeaders['Referer'] = `${parsedTarget.protocol}//${parsedTarget.host}/`;
     }
-    if (!fetchHeaders['Origin'] && !fetchHeaders['origin']) {
-      fetchHeaders['Origin'] = `${parsedTarget.protocol}//${parsedTarget.host}`;
-    }
-
     if (req.headers.range) {
       fetchHeaders['Range'] = req.headers.range;
     }

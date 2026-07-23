@@ -170,10 +170,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!fetchHeaders['Referer'] && !fetchHeaders['referer']) {
       fetchHeaders['Referer'] = `${parsedTarget.protocol}//${parsedTarget.host}/`;
     }
-    if (!fetchHeaders['Origin'] && !fetchHeaders['origin']) {
-      fetchHeaders['Origin'] = `${parsedTarget.protocol}//${parsedTarget.host}`;
-    }
-
     if (req.headers.range) {
       fetchHeaders['Range'] = Array.isArray(req.headers.range)
         ? req.headers.range[0]
