@@ -10,6 +10,9 @@ import {
   Settings2,
   Activity,
   RotateCcw,
+  RotateCw,
+  FastForward,
+  Rewind,
   Sparkles,
   Layers,
   Radio,
@@ -52,6 +55,13 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showStats, setShowStats] = useState<boolean>(false);
 
+  // Timeline & Buffer Progress States
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(0);
+  const [bufferedRanges, setBufferedRanges] = useState<{ start: number; end: number }[]>([]);
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<number>(0);
+
   // Quality & Track States
   const [qualities, setQualities] = useState<QualityLevel[]>([]);
   const [currentQuality, setCurrentQuality] = useState<number>(-1); // -1 = Auto
@@ -79,6 +89,105 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
   });
 
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Format time (HH:MM:SS or MM:SS)
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds < 0 || !isFinite(seconds)) return '0:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) {
+      return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // Skip time (+5s or -5s)
+  const skipTime = useCallback((seconds: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+    const dur = video.duration;
+    let targetTime = video.currentTime + seconds;
+    if (isFinite(dur) && dur > 0) {
+      targetTime = Math.max(0, Math.min(dur, targetTime));
+    } else {
+      targetTime = Math.max(0, targetTime);
+    }
+    video.currentTime = targetTime;
+    setCurrentTime(targetTime);
+  }, []);
+
+  // Update real-time playback & buffered timeline ranges
+  const updateProgress = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    setCurrentTime(video.currentTime);
+    if (isFinite(video.duration) && video.duration > 0) {
+      setDuration(video.duration);
+    } else if (video.seekable && video.seekable.length > 0) {
+      const end = video.seekable.end(video.seekable.length - 1);
+      setDuration(end);
+    }
+
+    const ranges: { start: number; end: number }[] = [];
+    const buf = video.buffered;
+    for (let i = 0; i < buf.length; i++) {
+      ranges.push({
+        start: buf.start(i),
+        end: buf.end(i),
+      });
+    }
+    setBufferedRanges(ranges);
+  }, []);
+
+  // Handle Seek on progress bar click or drag
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const video = videoRef.current;
+    const bar = e.currentTarget;
+    if (!video || !bar) return;
+
+    const rect = bar.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const percent = clickX / rect.width;
+
+    if (isFinite(video.duration) && video.duration > 0) {
+      const newTime = percent * video.duration;
+      video.currentTime = newTime;
+      setCurrentTime(newTime);
+    } else if (video.seekable && video.seekable.length > 0) {
+      const start = video.seekable.start(0);
+      const end = video.seekable.end(video.seekable.length - 1);
+      const seekableDur = end - start;
+      if (seekableDur > 0) {
+        const newTime = start + percent * seekableDur;
+        video.currentTime = newTime;
+        setCurrentTime(newTime);
+      }
+    }
+  };
+
+  // Handle Mouse Hover over progress bar to display timestamp preview
+  const handleMouseMoveBar = (e: React.MouseEvent<HTMLDivElement>) => {
+    const video = videoRef.current;
+    const bar = e.currentTarget;
+    if (!video || !bar) return;
+
+    const rect = bar.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const percent = clickX / rect.width;
+    setHoverPosition(percent * 100);
+
+    if (isFinite(video.duration) && video.duration > 0) {
+      setHoverTime(percent * video.duration);
+    } else if (video.seekable && video.seekable.length > 0) {
+      const start = video.seekable.start(0);
+      const end = video.seekable.end(video.seekable.length - 1);
+      setHoverTime(start + percent * (end - start));
+    } else {
+      setHoverTime(null);
+    }
+  };
 
   // Generate resolved video URL based on proxy mode
   const getPlayableUrl = useCallback(() => {
@@ -267,12 +376,14 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     };
   }, [loadStream]);
 
-  // Periodic stats updating
+  // Periodic stats updating & progress check
   useEffect(() => {
     const interval = setInterval(() => {
       const video = videoRef.current;
       const hls = hlsRef.current;
       if (!video) return;
+
+      updateProgress();
 
       let bufferedSec = 0;
       if (video.buffered.length > 0) {
@@ -294,10 +405,10 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         levelsCount: qualities.length,
         bandwidth: hls?.bandwidthEstimate || prev.bandwidth,
       }));
-    }, 1000);
+    }, 500);
 
     return () => clearInterval(interval);
-  }, [qualities.length]);
+  }, [qualities.length, updateProgress]);
 
   // Play/Pause toggle
   const togglePlay = () => {
@@ -408,6 +519,16 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
           e.preventDefault();
           togglePlay();
           break;
+        case 'arrowleft':
+        case 'j':
+          e.preventDefault();
+          skipTime(-5);
+          break;
+        case 'arrowright':
+        case 'l':
+          e.preventDefault();
+          skipTime(5);
+          break;
         case 'f':
           e.preventDefault();
           toggleFullscreen();
@@ -424,7 +545,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlaying, isMuted]);
+  }, [isPlaying, isMuted, skipTime]);
 
   // Compute CSS objectFit based on selected aspect ratio
   const getVideoObjectFit = (): React.CSSProperties => {
@@ -444,6 +565,10 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     }
   };
 
+  // Calculate percentages for YouTube progress bar
+  const maxDur = duration > 0 ? duration : 1;
+  const playedPercent = Math.min(100, Math.max(0, (currentTime / maxDur) * 100));
+
   return (
     <div
       ref={playerContainerRef}
@@ -455,6 +580,10 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       <video
         ref={videoRef}
         onClick={togglePlay}
+        onTimeUpdate={updateProgress}
+        onProgress={updateProgress}
+        onLoadedMetadata={updateProgress}
+        onDurationChange={updateProgress}
         onWaiting={() => setIsBuffering(true)}
         onPlaying={() => {
           setIsBuffering(false);
@@ -533,38 +662,112 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
           </div>
         </div>
 
-        {/* Center Big Play/Pause Button on Hover */}
-        <div className="flex items-center justify-center pointer-events-auto">
+        {/* Center Controls: Skip -5s, Play/Pause, Skip +5s */}
+        <div className="flex items-center justify-center gap-6 sm:gap-8 pointer-events-auto">
+          <button
+            onClick={() => skipTime(-5)}
+            className="p-3.5 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white hover:text-red-400 backdrop-blur-md border border-white/20 transition-all transform hover:scale-110 active:scale-95 flex flex-col items-center justify-center group shadow-xl"
+            title="Rewind 5 seconds (Left Arrow / J)"
+          >
+            <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-[10px] font-extrabold tracking-tighter -mt-0.5">5s</span>
+          </button>
+
           <button
             onClick={togglePlay}
-            className="p-5 rounded-full bg-red-600/90 text-white hover:bg-red-500 transition-all transform hover:scale-110 shadow-2xl shadow-red-600/50 backdrop-blur-md border border-red-400/30 active:scale-95"
+            className="p-5 sm:p-6 rounded-full bg-red-600/90 text-white hover:bg-red-500 transition-all transform hover:scale-110 shadow-2xl shadow-red-600/50 backdrop-blur-md border border-red-400/30 active:scale-95"
+            title={isPlaying ? 'Pause (Space / K)' : 'Play (Space / K)'}
           >
-            {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
+            {isPlaying ? <Pause className="w-8 h-8 sm:w-9 sm:h-9 fill-current" /> : <Play className="w-8 h-8 sm:w-9 sm:h-9 fill-current ml-1" />}
+          </button>
+
+          <button
+            onClick={() => skipTime(5)}
+            className="p-3.5 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white hover:text-red-400 backdrop-blur-md border border-white/20 transition-all transform hover:scale-110 active:scale-95 flex flex-col items-center justify-center group shadow-xl"
+            title="Forward 5 seconds (Right Arrow / L)"
+          >
+            <RotateCw className="w-5 h-5 sm:w-6 sm:h-6" />
+            <span className="text-[10px] font-extrabold tracking-tighter -mt-0.5">5s</span>
           </button>
         </div>
 
-        {/* Bottom Navigation & Controls */}
-        <div className="space-y-3 pointer-events-auto">
-          {/* Live Progress Bar */}
-          <div className="relative w-full h-1.5 bg-white/20 hover:h-2.5 rounded-full transition-all cursor-pointer group/bar">
-            <div className="absolute top-0 left-0 bottom-0 bg-red-600 rounded-full w-full shadow-lg shadow-red-600/50" />
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md scale-0 group-hover/bar:scale-100 transition-transform" />
+        {/* Bottom Navigation & YouTube-style Loading Progress Bar */}
+        <div className="space-y-2 pointer-events-auto">
+          {/* YouTube-Style Stream Progress & Real-Time Buffer Loading Bar */}
+          <div
+            onClick={handleSeek}
+            onMouseMove={handleMouseMoveBar}
+            onMouseLeave={() => setHoverTime(null)}
+            className="relative w-full h-2 hover:h-3 py-1 cursor-pointer group/bar flex items-center transition-all select-none"
+          >
+            {/* Background Track */}
+            <div className="w-full h-full bg-white/25 rounded-full overflow-hidden relative">
+              {/* Real-time Buffered / Stream Loaded Bars (YouTube grey/white buffer indicator) */}
+              {bufferedRanges.map((range, index) => {
+                const startPct = Math.min(100, Math.max(0, (range.start / maxDur) * 100));
+                const endPct = Math.min(100, Math.max(0, (range.end / maxDur) * 100));
+                const widthPct = Math.max(0, endPct - startPct);
+
+                return (
+                  <div
+                    key={index}
+                    style={{ left: `${startPct}%`, width: `${widthPct}%` }}
+                    className="absolute top-0 bottom-0 bg-white/50 rounded-full transition-all duration-300"
+                    title={`Stream loaded: ${formatTime(range.start)} - ${formatTime(range.end)}`}
+                  />
+                );
+              })}
+
+              {/* Played Progress Bar */}
+              <div
+                style={{ width: `${playedPercent}%` }}
+                className="absolute top-0 bottom-0 left-0 bg-red-600 rounded-full shadow-md shadow-red-600/50"
+              />
+            </div>
+
+            {/* Hover Vertical Line */}
+            {hoverTime !== null && (
+              <div
+                style={{ left: `${hoverPosition}%` }}
+                className="absolute top-0 bottom-0 w-0.5 bg-white/80 pointer-events-none"
+              />
+            )}
+
+            {/* Hover Time Tooltip */}
+            {hoverTime !== null && (
+              <div
+                style={{ left: `${hoverPosition}%` }}
+                className="absolute -top-8 -translate-x-1/2 px-2 py-0.5 bg-black/90 text-white border border-white/20 rounded text-[11px] font-mono shadow-xl pointer-events-none"
+              >
+                {formatTime(hoverTime)}
+              </div>
+            )}
+
+            {/* Scrubber Knob (Red Dot) */}
+            <div
+              style={{ left: `${playedPercent}%` }}
+              className="absolute top-1/2 -translate-y-1/2 -ml-2 w-4 h-4 bg-red-600 border-2 border-white rounded-full shadow-lg scale-0 group-hover/bar:scale-100 transition-transform pointer-events-none"
+            />
           </div>
 
           {/* Control Buttons Toolbar */}
-          <div className="flex items-center justify-between text-white">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between text-white text-xs">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={togglePlay}
-                className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="p-1.5 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
               </button>
 
-              <div className="flex items-center gap-2 group/vol">
+
+
+              <div className="flex items-center gap-2 group/vol ml-1">
                 <button
                   onClick={toggleMute}
-                  className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-1.5 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  title={isMuted ? 'Unmute' : 'Mute'}
                 >
                   {isMuted || volume === 0 ? <VolumeX className="w-5 h-5 text-red-400" /> : <Volume2 className="w-5 h-5" />}
                 </button>
@@ -575,8 +778,15 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
                   step="0.05"
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
-                  className="w-16 sm:w-20 accent-red-500 h-1 bg-white/30 rounded-lg cursor-pointer"
+                  className="w-14 sm:w-20 accent-red-500 h-1 bg-white/30 rounded-lg cursor-pointer"
                 />
+              </div>
+
+              {/* Real-time Time / Stream Status Indicator */}
+              <div className="ml-2 font-mono text-[11px] text-gray-300 flex items-center gap-1.5">
+                <span>{formatTime(currentTime)}</span>
+                <span className="text-gray-500">/</span>
+                <span>{duration > 0 && isFinite(duration) ? formatTime(duration) : 'LIVE'}</span>
               </div>
             </div>
 
@@ -619,7 +829,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
 
               <button
                 onClick={togglePiP}
-                className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors hidden sm:block"
+                className="p-1.5 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors hidden sm:block"
                 title="Picture in Picture"
               >
                 <PictureInPicture className="w-4 h-4" />
@@ -627,7 +837,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
 
               <button
                 onClick={toggleFullscreen}
-                className="p-2 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="p-1.5 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                 title="Toggle Fullscreen (F)"
               >
                 {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
@@ -639,3 +849,4 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     </div>
   );
 };
+
