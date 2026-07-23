@@ -259,6 +259,8 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     const sources = getChannelSources();
     const rawSourceUrl = sources[sourceIndex] || sources[0] || channel.streamUrl;
     const streamUrl = getPlayableUrl(rawSourceUrl);
+    const hasBackupSource = sources.length > 1 && sourceIndex < sources.length - 1;
+    const isWrappedTsSource = shouldWrapSourceAsHls(rawSourceUrl);
     const loadStartedAt = Date.now();
 
     // Clean up existing HLS instance
@@ -427,9 +429,19 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
               mediaRetryCountRef.current += 1;
-              if (mediaRetryCountRef.current === 1) {
+              if (isWrappedTsSource && hasBackupSource) {
+                if (tryNextSource('Browser decoder rejected this wrapped transport stream.')) {
+                  hls.destroy();
+                  return;
+                }
+              } else if (mediaRetryCountRef.current === 1) {
                 console.log('Fatal media error encountered, trying media recovery...');
                 hls.recoverMediaError();
+              } else if (hasBackupSource) {
+                if (tryNextSource('Stream decoder could not recover this source.')) {
+                  hls.destroy();
+                  return;
+                }
               } else if (mediaRetryCountRef.current === 2) {
                 console.log('Retrying media recovery with swapped audio codec...');
                 hls.swapAudioCodec();
@@ -498,6 +510,9 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       }
       if (reloadTimeoutRef.current) {
         clearTimeout(reloadTimeoutRef.current);
+      }
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
       }
       if (hlsRef.current) {
         hlsRef.current.destroy();
@@ -622,20 +637,55 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     }
   };
 
-  // Auto-hide controls overlay
-  const handleMouseMove = () => {
-    setShowControls(true);
+  const hideControls = useCallback(() => {
+    setShowControls(false);
+    setShowQualityMenu(false);
+    setShowAudioMenu(false);
+    setShowAspectMenu(false);
+  }, []);
+
+  const scheduleControlsAutoHide = useCallback((forceHide = false) => {
     if (controlsTimeoutRef.current) {
       clearTimeout(controlsTimeoutRef.current);
     }
     controlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying) {
-        setShowControls(false);
-        setShowQualityMenu(false);
-        setShowAudioMenu(false);
-        setShowAspectMenu(false);
-      }
+      if (forceHide || isPlaying) hideControls();
     }, 3500);
+  }, [hideControls, isPlaying]);
+
+  const revealControls = useCallback((forceAutoHide = false) => {
+    setShowControls(true);
+    scheduleControlsAutoHide(forceAutoHide);
+  }, [scheduleControlsAutoHide]);
+
+  const toggleControlsVisibility = useCallback(() => {
+    if (showControls) {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      hideControls();
+      return;
+    }
+
+    revealControls(true);
+  }, [hideControls, revealControls, showControls]);
+
+  // Auto-hide controls overlay
+  const handleMouseMove = () => {
+    revealControls(false);
+  };
+
+  const handleMouseLeave = () => {
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    if (isPlaying) hideControls();
+  };
+
+  const handleVideoPointerUp = (e: React.PointerEvent<HTMLVideoElement>) => {
+    if (e.pointerType === 'mouse' || e.pointerType === 'touch' || e.pointerType === 'pen') {
+      toggleControlsVisibility();
+    }
   };
 
   // Keyboard Shortcuts
@@ -703,13 +753,13 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     <div
       ref={playerContainerRef}
       onMouseMove={handleMouseMove}
-      onMouseLeave={() => isPlaying && setShowControls(false)}
+      onMouseLeave={handleMouseLeave}
       className="relative w-full h-full bg-black rounded-2xl overflow-hidden group select-none shadow-2xl flex items-center justify-center border border-white/10"
     >
       {/* Video Element */}
       <video
         ref={videoRef}
-        onClick={togglePlay}
+        onPointerUp={handleVideoPointerUp}
         onTimeUpdate={updateProgress}
         onProgress={updateProgress}
         onLoadedMetadata={updateProgress}

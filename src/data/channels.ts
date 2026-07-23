@@ -240,8 +240,11 @@ export const INITIAL_CHANNELS: Channel[] = [
     id: 'star-sports-3',
     name: 'STAR SPORTS 3',
     streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_SPORTS_3.m3u8',
+    backupUrls: [
+      'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=373203&extension=ts&play_token=eKdVewi9nL',
+    ],
     category: 'Sports',
-    description: 'Star Sports 3 live stream',
+    description: 'Star Sports 3 live stream with wrapped fallback source',
   },
   {
     id: 'star-sports-select-1',
