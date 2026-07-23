@@ -154,7 +154,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'mtv',
     name: 'MTV',
-    streamUrl: 'http://tv.cloudcdn.me/live.ts?channelId=173&uid=15301&deviceMac=00:1A:79:04:55:C4',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=1433162&extension=ts&play_token=7OClLRs313',
     forceHlsWrap: true,
     category: 'Entertainment',
     description: 'MTV transport stream wrapped for web playback',
@@ -170,7 +170,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'star-jalsha',
     name: 'STAR JALSHA',
-    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=908657&extension=ts&play_token=wfNBuvtuy4',
+    streamUrl: 'http://tv.cloudcdn.me/live.ts?channelId=116&uid=15301&deviceMac=00:1A:79:04:55:C4',
     forceHlsWrap: true,
     category: 'Entertainment',
     description: 'Star Jalsha transport stream wrapped for web playback',

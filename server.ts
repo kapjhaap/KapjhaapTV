@@ -176,6 +176,7 @@ app.get('/api/proxy', async (req, res) => {
 
   try {
     const fetchHeaders = mergeCustomHeaders(customHeadersParam);
+    const isSyntheticSegment = typeof req.query.segment === 'string';
 
     if (req.query.wrap === 'hls') {
       setProxyCorsHeaders(res);
@@ -183,6 +184,10 @@ app.get('/api/proxy', async (req, res) => {
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.send(buildSyntheticLivePlaylist(targetUrl, customHeadersParam));
       return;
+    }
+
+    if (isSyntheticSegment) {
+      fetchHeaders['Connection'] = 'close';
     }
 
     if (!fetchHeaders['Referer'] && !fetchHeaders['referer']) {
@@ -213,7 +218,6 @@ app.get('/api/proxy', async (req, res) => {
     const contentLength = response.headers.get('content-length');
     const contentRange = response.headers.get('content-range');
     const acceptRanges = response.headers.get('accept-ranges');
-    const isSyntheticSegment = typeof req.query.segment === 'string';
 
     if (shouldInspectAsPlaylist(contentType, targetUrl, finalUrl) && req.method !== 'HEAD') {
       const textContent = await response.text();

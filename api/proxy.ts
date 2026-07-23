@@ -159,12 +159,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const fetchHeaders = mergeCustomHeaders(customHeadersParam);
+    const isSyntheticSegment = typeof req.query.segment === 'string';
 
     if (req.query.wrap === 'hls') {
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8');
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.status(200).send(buildSyntheticLivePlaylist(targetUrl, customHeadersParam));
       return;
+    }
+
+    if (isSyntheticSegment) {
+      fetchHeaders['Connection'] = 'close';
     }
 
     if (!fetchHeaders['Referer'] && !fetchHeaders['referer']) {
@@ -195,7 +200,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const contentLength = response.headers.get('content-length');
     const contentRange = response.headers.get('content-range');
     const acceptRanges = response.headers.get('accept-ranges');
-    const isSyntheticSegment = typeof req.query.segment === 'string';
 
     if (shouldInspectAsPlaylist(contentType, targetUrl, finalUrl) && req.method !== 'HEAD') {
       const textContent = await response.text();
