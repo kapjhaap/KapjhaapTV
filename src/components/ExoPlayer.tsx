@@ -750,6 +750,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
   // Calculate percentages for YouTube progress bar
   const maxDur = duration > 0 ? duration : 1;
   const playedPercent = Math.min(100, Math.max(0, (currentTime / maxDur) * 100));
+  const controlsVisible = showControls || !isPlaying;
 
   return (
     <div
@@ -826,11 +827,11 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       {/* ExoPlayer HUD Control Layer */}
       <div
         className={`absolute inset-0 z-20 flex flex-col justify-between p-4 sm:p-6 bg-gradient-to-t from-black/90 via-black/30 to-black/80 transition-opacity duration-300 pointer-events-none ${
-          showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
+          controlsVisible ? 'opacity-100' : 'opacity-0'
         }`}
       >
         {/* Top Header Overlay */}
-        <div className="flex items-center justify-between w-full pointer-events-auto">
+        <div className={`flex items-center justify-between w-full ${controlsVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-md">
               <Tv2 className="w-4 h-4 text-red-500" />
@@ -846,10 +847,10 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         </div>
 
         {/* Center Controls: Skip -5s, Play/Pause, Skip +5s */}
-        <div className="flex items-center justify-center gap-6 sm:gap-8 pointer-events-auto">
+        <div className={`flex items-center justify-center gap-6 sm:gap-8 ${controlsVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           <button
             onClick={() => skipTime(-5)}
-            className="p-3.5 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white hover:text-red-400 backdrop-blur-md border border-white/20 transition-all transform hover:scale-110 active:scale-95 flex flex-col items-center justify-center group shadow-xl"
+            className="hidden sm:flex p-3.5 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white hover:text-red-400 backdrop-blur-md border border-white/20 transition-all transform hover:scale-110 active:scale-95 flex-col items-center justify-center group shadow-xl"
             title="Rewind 5 seconds (Left Arrow / J)"
           >
             <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -866,7 +867,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
 
           <button
             onClick={() => skipTime(5)}
-            className="p-3.5 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white hover:text-red-400 backdrop-blur-md border border-white/20 transition-all transform hover:scale-110 active:scale-95 flex flex-col items-center justify-center group shadow-xl"
+            className="hidden sm:flex p-3.5 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white hover:text-red-400 backdrop-blur-md border border-white/20 transition-all transform hover:scale-110 active:scale-95 flex-col items-center justify-center group shadow-xl"
             title="Forward 5 seconds (Right Arrow / L)"
           >
             <RotateCw className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -875,7 +876,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         </div>
 
         {/* Bottom Navigation */}
-        <div className="space-y-2 pointer-events-auto">
+        <div className={`space-y-2 ${controlsVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           {/* YouTube-Style Stream Progress & Real-Time Buffer Loading Bar */}
           <div
             onClick={handleSeek}
