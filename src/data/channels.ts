@@ -250,13 +250,6 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'Somoy News alternate live stream',
   },
   {
-    id: 'ekushe-tv',
-    name: 'EKUSHE TV',
-    streamUrl: 'http://210.4.72.204/hls-live/livepkgr/*definst*/liveevent/livestream3.m3u8',
-    category: 'Entertainment',
-    description: 'Ekushe TV live stream',
-  },
-  {
     id: 'g-series',
     name: 'G SERIES',
     streamUrl: 'https://vods2.aynaott.com/gseriesDrama/tracks-v1a1/mono.ts.m3u8',
@@ -294,14 +287,14 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-aath',
     name: 'SONY AATH',
-    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/SONY_8.m3u8',
+    streamUrl: 'https://book4u.top/worker/index.php?path=api/fdf6e4d104/playlist.m3u8',
     category: 'Entertainment',
     description: 'Sony Aath live stream',
   },
   {
     id: 'sony-sab',
     name: 'SONY SAB',
-    streamUrl: 'http://2756d46c.akciatv.ru/iptv/7FRNF6CY9A9TG3/6571/index.m3u8',
+    streamUrl: 'https://sony.dongobd247.workers.dev/stream.m3u8?id=1000009248',
     category: 'Entertainment',
     description: 'Sony SAB live stream',
   },
@@ -326,13 +319,6 @@ export const INITIAL_CHANNELS: Channel[] = [
     streamUrl: 'https://ms2.alliancebroadband.in/media_9xm.m3u8',
     category: 'Entertainment',
     description: '9XM music live stream',
-  },
-  {
-    id: 'mtv',
-    name: 'MTV',
-    streamUrl: 'https://madanitv.assadikb.workers.dev/live.php?id=1145&e=.m3u8',
-    category: 'Entertainment',
-    description: 'MTV live stream',
   },
   {
     id: 'doraemon-tv',
