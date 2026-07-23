@@ -176,6 +176,22 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'Star Jalsha transport stream wrapped for web playback',
   },
   {
+    id: 'star-gold',
+    name: 'STAR GOLD',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=737323&extension=ts&play_token=0XndB21c35',
+    forceHlsWrap: true,
+    category: 'Entertainment',
+    description: 'Star Gold transport stream wrapped for web playback',
+  },
+  {
+    id: 'colours-cineplex',
+    name: 'COLOURS CINEPLEX',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=944627&extension=ts&play_token=vkO5UTaxrb',
+    forceHlsWrap: true,
+    category: 'Entertainment',
+    description: 'Colours Cineplex transport stream wrapped for web playback',
+  },
+  {
     id: 'history-tv',
     name: 'HISTORY TV',
     streamUrl: 'http://103.180.212.191:3500/live/146.m3u8',
