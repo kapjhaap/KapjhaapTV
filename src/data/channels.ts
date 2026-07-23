@@ -85,6 +85,7 @@ export const INITIAL_CHANNELS: Channel[] = [
     id: 'somoy-news-bosstv',
     name: 'SOMOY NEWS',
     streamUrl: 'https://owrcovcrpy.gpcdn.net/bpk-tv/1713/output/index.m3u8',
+    useDirectStream: true,
     category: 'News',
     description: 'Somoy News alternate live stream',
   },
