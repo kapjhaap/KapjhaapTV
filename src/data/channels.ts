@@ -162,18 +162,4 @@ export const INITIAL_CHANNELS: Channel[] = [
     category: 'Sports',
     description: 'Star Sports 1 Live Stream',
   },
-  {
-    id: 'star-sports-2',
-    name: 'STAR SPORTS 2',
-    streamUrl: 'http://66.102.126.10:8000/play/a00v/index.m3u8',
-    category: 'Sports',
-    description: 'Star Sports 2 Live Stream',
-  },
-  {
-    id: 'star-sports-3',
-    name: 'STAR SPORTS 3',
-    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=373203&extension=ts&play_token=eKdVewi9nL',
-    category: 'Sports',
-    description: 'Star Sports 3 Live Stream',
-  },
 ];
