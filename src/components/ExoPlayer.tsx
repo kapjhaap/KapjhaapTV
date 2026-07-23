@@ -213,6 +213,10 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
 
   // Generate resolved video URL based on proxy mode
   const getPlayableUrl = useCallback((rawUrl: string) => {
+    if (channel.useDirectStream) {
+      return rawUrl;
+    }
+
     if (proxyMode === 'cors_proxy') {
       let proxyEndpoint = `/api/proxy?url=${encodeURIComponent(rawUrl)}`;
       if (channel.httpHeaders) {
@@ -224,7 +228,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       return proxyEndpoint;
     }
     return rawUrl;
-  }, [channel.forceHlsWrap, channel.httpHeaders, proxyMode]);
+  }, [channel.forceHlsWrap, channel.httpHeaders, channel.useDirectStream, proxyMode]);
 
   // Load stream in HLS.js or native HTML5 video
   const loadStream = useCallback(function loadChannelStream(sourceIndex = 0) {

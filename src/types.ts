@@ -4,6 +4,7 @@ export interface Channel {
   streamUrl: string;
   backupUrls?: string[];
   forceHlsWrap?: boolean;
+  useDirectStream?: boolean;
   category: 'Sports' | 'News' | 'Entertainment' | 'Custom';
   logo?: string;
   isCustom?: boolean;
