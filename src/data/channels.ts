@@ -106,7 +106,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-ent-tv',
     name: 'SONY ENT TV',
-    streamUrl: 'https://stream.ottplus.bd/live/sony_ent_hd_abr/index.m3u8',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=943926&extension=ts&play_token=SnwZyFnNRt',
     useDirectStream: true,
     category: 'Entertainment',
     description: 'Sony Entertainment TV HD live stream',
