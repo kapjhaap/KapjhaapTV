@@ -178,7 +178,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'star-gold',
     name: 'STAR GOLD',
-    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=737323&extension=ts&play_token=0XndB21c35',
+    streamUrl: 'http://66.102.126.10:8000/play/a00f/index.m3u8',
     forceHlsWrap: true,
     category: 'Entertainment',
     description: 'Star Gold transport stream wrapped for web playback',
