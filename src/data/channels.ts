@@ -221,7 +221,10 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'hungama-tv',
     name: 'HUNGAMA TV',
-    streamUrl: 'http://mag.king-4k.cc/live/C1645263A1D245C/1sFTVBSVCP/1441461.m3u8',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/HUNGAMA.m3u8',
+    backupUrls: [
+      'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=1433211&extension=ts&play_token=fzIZLPMmD8',
+    ],
     category: 'Entertainment',
     description: 'Hungama TV live stream',
   },
