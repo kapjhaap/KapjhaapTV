@@ -881,10 +881,10 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
             onClick={handleSeek}
             onMouseMove={handleMouseMoveBar}
             onMouseLeave={() => setHoverTime(null)}
-            className="relative w-full h-2 hover:h-3 py-1 cursor-pointer group/bar flex items-center transition-all select-none"
+            className="relative w-full h-4 cursor-pointer group/bar flex items-center transition-all select-none"
           >
             {/* Background Track */}
-            <div className="w-full h-full bg-white/25 rounded-full overflow-hidden relative">
+            <div className="w-full h-1.5 group-hover/bar:h-2.5 bg-white/30 rounded-full overflow-hidden relative transition-all">
               {/* Real-time Buffered / Stream Loaded Bars (YouTube grey/white buffer indicator) */}
               {bufferedRanges.map((range, index) => {
                 const startPct = Math.min(100, Math.max(0, (range.start / maxDur) * 100));
@@ -929,7 +929,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
             {/* Scrubber Knob (Red Dot) */}
             <div
               style={{ left: `${playedPercent}%` }}
-              className="absolute top-1/2 -translate-y-1/2 -ml-2 w-4 h-4 bg-red-600 border-2 border-white rounded-full shadow-lg scale-0 group-hover/bar:scale-100 transition-transform pointer-events-none"
+              className="absolute top-1/2 -translate-y-1/2 -ml-2 w-4 h-4 bg-red-600 border-2 border-white rounded-full shadow-lg scale-100 transition-transform pointer-events-none"
             />
           </div>
 
