@@ -21,6 +21,8 @@ const HOP_BY_HOP_HEADERS = new Set([
   'upgrade',
 ]);
 
+const SYNTHETIC_SEGMENT_MS = 6200;
+
 function mergeCustomHeaders(customHeadersParam?: string): Record<string, string> {
   const headers = { ...DEFAULT_STREAM_HEADERS };
 
@@ -197,6 +199,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const contentLength = response.headers.get('content-length');
     const contentRange = response.headers.get('content-range');
     const acceptRanges = response.headers.get('accept-ranges');
+    const isSyntheticSegment = typeof req.query.segment === 'string';
 
     if (shouldInspectAsPlaylist(contentType, targetUrl, finalUrl) && req.method !== 'HEAD') {
       const textContent = await response.text();
@@ -228,12 +231,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.setHeader('Content-Type', 'video/mp4');
     }
 
-    if (contentLength) res.setHeader('Content-Length', contentLength);
+    if (contentLength && !isSyntheticSegment) res.setHeader('Content-Length', contentLength);
 
     if (contentRange) res.setHeader('Content-Range', contentRange);
 
     if (acceptRanges) res.setHeader('Accept-Ranges', acceptRanges);
-    res.setHeader('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
+    res.setHeader(
+      'Cache-Control',
+      isSyntheticSegment ? 'no-cache, no-store, must-revalidate' : 'public, max-age=10, stale-while-revalidate=30'
+    );
 
     res.status(response.status);
 
@@ -244,6 +250,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (response.body) {
       const nodeStream = Readable.fromWeb(response.body as any);
+      if (isSyntheticSegment) {
+        const segmentTimer = setTimeout(() => {
+          nodeStream.destroy();
+          if (!res.writableEnded) res.end();
+        }, SYNTHETIC_SEGMENT_MS);
+        res.on('close', () => {
+          clearTimeout(segmentTimer);
+          nodeStream.destroy();
+        });
+        nodeStream.on('end', () => clearTimeout(segmentTimer));
+        nodeStream.on('error', () => clearTimeout(segmentTimer));
+      }
       nodeStream.pipe(res as any);
     } else {
       res.end();
