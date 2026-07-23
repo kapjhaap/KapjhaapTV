@@ -847,7 +847,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         </div>
 
         {/* Center Controls: Skip -5s, Play/Pause, Skip +5s */}
-        <div className={`flex items-center justify-center gap-6 sm:gap-8 ${controlsVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+        <div className={`hidden sm:flex items-center justify-center gap-6 sm:gap-8 ${controlsVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
           <button
             onClick={() => skipTime(-5)}
             className="hidden sm:flex p-3.5 sm:p-4 rounded-full bg-black/60 hover:bg-black/90 text-white hover:text-red-400 backdrop-blur-md border border-white/20 transition-all transform hover:scale-110 active:scale-95 flex-col items-center justify-center group shadow-xl"

@@ -178,13 +178,13 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'star-gold',
     name: 'STAR GOLD',
-    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_GOLD_HD.m3u8',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_GOLD_2_HD.m3u8',
     backupUrls: [
-      'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_GOLD_2_HD.m3u8',
+      'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_GOLD_HD.m3u8',
       'http://66.102.126.10:8000/play/a00f/index.m3u8',
     ],
     category: 'Entertainment',
-    description: 'Star Gold live stream with alternate fallback sources',
+    description: 'Star Gold AAC-first live stream with alternate fallback sources',
   },
   {
     id: 'colours-cineplex',
