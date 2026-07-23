@@ -179,7 +179,6 @@ export const INITIAL_CHANNELS: Channel[] = [
     id: 'star-gold',
     name: 'STAR GOLD',
     streamUrl: 'http://66.102.126.10:8000/play/a00f/index.m3u8',
-    forceHlsWrap: true,
     category: 'Entertainment',
     description: 'Star Gold transport stream wrapped for web playback',
   },
