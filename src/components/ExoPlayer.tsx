@@ -41,7 +41,10 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
 
   // Connection & Retry tracking
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const networkRetryCountRef = useRef<number>(0);
+  const mediaRetryCountRef = useRef<number>(0);
+  const activeSourceIndexRef = useRef<number>(0);
 
   // Player States
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -189,68 +192,126 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     }
   };
 
+  const getChannelSources = useCallback(() => {
+    const sourceSet = new Set<string>();
+    [channel.streamUrl, ...(channel.backupUrls || [])].forEach((url) => {
+      const trimmed = url?.trim();
+      if (trimmed) sourceSet.add(trimmed);
+    });
+    return Array.from(sourceSet);
+  }, [channel.streamUrl, channel.backupUrls]);
+
+  const shouldWrapSourceAsHls = (rawUrl: string) => {
+    if (channel.forceHlsWrap) return true;
+    try {
+      const parsed = new URL(rawUrl);
+      return parsed.pathname.toLowerCase().endsWith('.ts') || parsed.searchParams.get('extension') === 'ts';
+    } catch {
+      return /\.ts($|\?)/i.test(rawUrl) || /[?&]extension=ts(&|$)/i.test(rawUrl);
+    }
+  };
+
   // Generate resolved video URL based on proxy mode
-  const getPlayableUrl = useCallback(() => {
-    let rawUrl = channel.streamUrl;
+  const getPlayableUrl = useCallback((rawUrl: string) => {
     if (proxyMode === 'cors_proxy') {
       let proxyEndpoint = `/api/proxy?url=${encodeURIComponent(rawUrl)}`;
       if (channel.httpHeaders) {
         proxyEndpoint += `&headers=${encodeURIComponent(JSON.stringify(channel.httpHeaders))}`;
       }
+      if (shouldWrapSourceAsHls(rawUrl)) {
+        proxyEndpoint += '&wrap=hls';
+      }
       return proxyEndpoint;
     }
     return rawUrl;
-  }, [channel.streamUrl, channel.httpHeaders, proxyMode]);
+  }, [channel.forceHlsWrap, channel.httpHeaders, proxyMode]);
 
   // Load stream in HLS.js or native HTML5 video
-  const loadStream = useCallback(() => {
+  const loadStream = useCallback(function loadChannelStream(sourceIndex = 0) {
     const video = videoRef.current;
     if (!video) return;
 
     if (connectionTimeoutRef.current) {
       clearTimeout(connectionTimeoutRef.current);
     }
+    if (reloadTimeoutRef.current) {
+      clearTimeout(reloadTimeoutRef.current);
+    }
     networkRetryCountRef.current = 0;
+    mediaRetryCountRef.current = 0;
+    activeSourceIndexRef.current = sourceIndex;
 
     setHasError(false);
     setErrorMessage('');
     setIsBuffering(true);
+    setQualities([]);
+    setAudioTracks([]);
+    setCurrentQuality(-1);
+    setCurrentAudioTrack(-1);
 
-    const streamUrl = getPlayableUrl();
+    const sources = getChannelSources();
+    const rawSourceUrl = sources[sourceIndex] || sources[0] || channel.streamUrl;
+    const streamUrl = getPlayableUrl(rawSourceUrl);
+    const loadStartedAt = Date.now();
 
     // Clean up existing HLS instance
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
+    video.removeAttribute('src');
+    video.load();
 
-    // Set 10-second guard connection timeout to prevent infinite "Connecting..." spinning
-    connectionTimeoutRef.current = setTimeout(() => {
-      if (isBuffering || !isPlaying) {
-        setHasError(true);
-        setIsBuffering(false);
-        setErrorMessage(
-          'Stream connection timed out (10s). The stream server or IP endpoint may be offline, restricted, or token expired.'
-        );
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
-          hlsRef.current = null;
-        }
+    const tryNextSource = (message: string) => {
+      if (sources.length > 1 && sourceIndex < sources.length - 1) {
+        setErrorMessage(`${message} Trying backup source ${sourceIndex + 2}/${sources.length}...`);
+        reloadTimeoutRef.current = setTimeout(() => loadChannelStream(sourceIndex + 1), 900);
+        return true;
       }
-    }, 10000);
+      return false;
+    };
+
+    // Guard timeout to prevent infinite "Connecting..." spinning on dead endpoints.
+    connectionTimeoutRef.current = setTimeout(() => {
+      if (tryNextSource('Primary stream connection timed out.')) {
+        return;
+      }
+
+      setHasError(true);
+      setIsBuffering(false);
+      setErrorMessage(
+        'Stream connection timed out. The stream server may be offline, overloaded, restricted, or using an expired token.'
+      );
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    }, 25000);
 
     if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
-        backBufferLength: 60,
-        maxBufferLength: 30,
+        backBufferLength: 90,
+        maxBufferLength: 60,
         maxMaxBufferLength: 300,
-        manifestLoadingTimeOut: 8000,
-        manifestLoadingMaxRetry: 2,
-        levelLoadingTimeOut: 8000,
-        fragLoadingTimeOut: 8000,
-        fragLoadingMaxRetry: 3,
+        liveSyncDurationCount: 3,
+        liveMaxLatencyDurationCount: 10,
+        maxLiveSyncPlaybackRate: 1.2,
+        manifestLoadingTimeOut: 20000,
+        manifestLoadingMaxRetry: 6,
+        manifestLoadingRetryDelay: 800,
+        manifestLoadingMaxRetryTimeout: 8000,
+        levelLoadingTimeOut: 20000,
+        levelLoadingMaxRetry: 6,
+        levelLoadingRetryDelay: 800,
+        levelLoadingMaxRetryTimeout: 8000,
+        fragLoadingTimeOut: 30000,
+        fragLoadingMaxRetry: 8,
+        fragLoadingRetryDelay: 800,
+        fragLoadingMaxRetryTimeout: 10000,
+        appendErrorMaxRetry: 4,
+        startFragPrefetch: true,
       });
 
       hlsRef.current = hls;
@@ -263,6 +324,12 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         }
         setIsBuffering(false);
         setHasError(false);
+        setStats((prev) => ({
+          ...prev,
+          isLive: true,
+          loadTimeMs: Date.now() - loadStartedAt,
+          levelsCount: data.levels.length,
+        }));
 
         const parsedQualities: QualityLevel[] = data.levels.map((lvl, index) => ({
           id: index,
@@ -311,30 +378,73 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         }
       });
 
+      hls.on(Hls.Events.FRAG_LOADED, () => {
+        if (connectionTimeoutRef.current) {
+          clearTimeout(connectionTimeoutRef.current);
+        }
+        networkRetryCountRef.current = 0;
+      });
+
       hls.on(Hls.Events.ERROR, (_event, data) => {
         console.warn('HLS Event Error:', data);
+        if (
+          !data.fatal &&
+          (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR ||
+            data.details === Hls.ErrorDetails.BUFFER_NUDGE_ON_STALL)
+        ) {
+          hls.startLoad();
+          return;
+        }
+
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               networkRetryCountRef.current += 1;
-              if (networkRetryCountRef.current <= 2) {
-                console.log(`Network error, retry ${networkRetryCountRef.current}/2...`);
+              if (networkRetryCountRef.current <= 5) {
+                console.log(`Network error, retry ${networkRetryCountRef.current}/5...`);
                 hls.startLoad();
               } else {
+                if (tryNextSource(`Unable to load stream segments (HTTP ${data.response?.code || 'network error'}).`)) {
+                  hls.destroy();
+                  return;
+                }
+
                 if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
                 setHasError(true);
                 setErrorMessage(
-                  `Unable to load live stream network segments (HTTP ${data.response?.code || 'Error'}). The stream token or IP server may be offline.`
+                  `Unable to load live stream segments (HTTP ${data.response?.code || 'network error'}). The stream token, origin server, or media path may be unavailable.`
                 );
                 setIsBuffering(false);
                 hls.destroy();
               }
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
-              console.log('Fatal media error encountered, trying to recover...');
-              hls.recoverMediaError();
+              mediaRetryCountRef.current += 1;
+              if (mediaRetryCountRef.current === 1) {
+                console.log('Fatal media error encountered, trying media recovery...');
+                hls.recoverMediaError();
+              } else if (mediaRetryCountRef.current === 2) {
+                console.log('Retrying media recovery with swapped audio codec...');
+                hls.swapAudioCodec();
+                hls.recoverMediaError();
+              } else {
+                if (tryNextSource('Stream decoder could not recover this source.')) {
+                  hls.destroy();
+                  return;
+                }
+                if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
+                setHasError(true);
+                setErrorMessage('Stream decoder could not recover. This source may use unsupported codecs or malformed segments.');
+                setIsBuffering(false);
+                hls.destroy();
+              }
               break;
             default:
+              if (tryNextSource(data.details ? `Stream error: ${data.details}.` : 'Stream failed.')) {
+                hls.destroy();
+                return;
+              }
+
               if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
               setHasError(true);
               setErrorMessage(
@@ -353,21 +463,34 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       video.addEventListener('loadedmetadata', () => {
         if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
         setIsBuffering(false);
+        setStats((prev) => ({ ...prev, loadTimeMs: Date.now() - loadStartedAt }));
         video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-      });
+      }, { once: true });
+      video.addEventListener('error', () => {
+        if (tryNextSource('Native HLS playback failed.')) {
+          return;
+        }
+        if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
+        setHasError(true);
+        setErrorMessage('Native HLS playback failed for this stream.');
+        setIsBuffering(false);
+      }, { once: true });
     } else {
       if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
       setHasError(true);
       setErrorMessage('HLS video playback is not supported in this browser.');
       setIsBuffering(false);
     }
-  }, [getPlayableUrl]);
+  }, [channel.streamUrl, getChannelSources, getPlayableUrl]);
 
   useEffect(() => {
-    loadStream();
+    loadStream(0);
     return () => {
       if (connectionTimeoutRef.current) {
         clearTimeout(connectionTimeoutRef.current);
+      }
+      if (reloadTimeoutRef.current) {
+        clearTimeout(reloadTimeoutRef.current);
       }
       if (hlsRef.current) {
         hlsRef.current.destroy();
@@ -585,6 +708,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         onLoadedMetadata={updateProgress}
         onDurationChange={updateProgress}
         onWaiting={() => setIsBuffering(true)}
+        onStalled={() => hlsRef.current?.startLoad()}
         onPlaying={() => {
           setIsBuffering(false);
           if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
@@ -849,4 +973,3 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     </div>
   );
 };
-

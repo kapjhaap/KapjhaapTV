@@ -1,6 +1,91 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Readable } from 'stream';
 
+const DEFAULT_STREAM_HEADERS: Record<string, string> = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': '*/*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Connection': 'keep-alive',
+};
+
+const HOP_BY_HOP_HEADERS = new Set([
+  'connection',
+  'content-length',
+  'host',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+]);
+
+function mergeCustomHeaders(customHeadersParam?: string): Record<string, string> {
+  const headers = { ...DEFAULT_STREAM_HEADERS };
+
+  if (!customHeadersParam) return headers;
+
+  try {
+    const parsed = JSON.parse(customHeadersParam);
+    if (typeof parsed === 'object' && parsed !== null) {
+      Object.entries(parsed).forEach(([key, value]) => {
+        if (!HOP_BY_HOP_HEADERS.has(key.toLowerCase()) && typeof value === 'string') {
+          headers[key] = value;
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to parse custom headers parameter:', e);
+  }
+
+  return headers;
+}
+
+function getUrlPathname(url: string): string {
+  try {
+    return new URL(url).pathname.toLowerCase();
+  } catch {
+    return url.toLowerCase();
+  }
+}
+
+function hasKnownMediaExtension(url: string): boolean {
+  return /\.(ts|m2ts|m4s|mp4|m4v|aac|ac3|eac3|mp3|webvtt|vtt|key|bin|jpg|jpeg|png|gif)$/i.test(getUrlPathname(url));
+}
+
+function shouldInspectAsPlaylist(contentType: string, targetUrl: string, finalUrl: string): boolean {
+  const lowerType = contentType.toLowerCase();
+  const playlistType =
+    lowerType.includes('mpegurl') ||
+    lowerType.includes('m3u8') ||
+    lowerType.includes('vnd.apple');
+  const playlistUrl =
+    /\.(m3u8|m3u)$/i.test(getUrlPathname(targetUrl)) ||
+    /\.(m3u8|m3u)$/i.test(getUrlPathname(finalUrl));
+  const textLike = lowerType.startsWith('text/') || lowerType.includes('json') || lowerType.includes('xml');
+
+  return playlistType || playlistUrl || (textLike && !hasKnownMediaExtension(targetUrl) && !hasKnownMediaExtension(finalUrl));
+}
+
+function buildSyntheticLivePlaylist(targetUrl: string, customHeadersJson?: string): string {
+  const mediaSequence = Math.floor(Date.now() / 6000);
+  let segmentUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}&segment=${mediaSequence}`;
+  if (customHeadersJson) {
+    segmentUrl += `&headers=${encodeURIComponent(customHeadersJson)}`;
+  }
+
+  return [
+    '#EXTM3U',
+    '#EXT-X-VERSION:3',
+    '#EXT-X-TARGETDURATION:6',
+    `#EXT-X-MEDIA-SEQUENCE:${mediaSequence}`,
+    '#EXTINF:6.0,',
+    segmentUrl,
+    '',
+  ].join('\n');
+}
+
 // Helper to rewrite relative and absolute URLs inside m3u8 playlists
 function rewriteM3u8Playlist(m3u8Content: string, targetUrl: string, customHeadersJson?: string): string {
   const lines = m3u8Content.split(/\r?\n/);
@@ -55,35 +140,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  let parsedTarget: URL;
+  try {
+    parsedTarget = new URL(targetUrl);
+    if (!['http:', 'https:'].includes(parsedTarget.protocol)) {
+      res.status(400).json({ error: 'Only http and https stream URLs are supported' });
+      return;
+    }
+  } catch {
+    res.status(400).json({ error: 'Invalid stream URL' });
+    return;
+  }
+
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000); // 12 sec max timeout per chunk request
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
   try {
-    const fetchHeaders: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept': '*/*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Connection': 'keep-alive',
-    };
+    const fetchHeaders = mergeCustomHeaders(customHeadersParam);
 
-    if (customHeadersParam) {
-      try {
-        const parsed = JSON.parse(customHeadersParam);
-        if (typeof parsed === 'object' && parsed !== null) {
-          Object.assign(fetchHeaders, parsed);
-        }
-      } catch (e) {
-        console.warn('Failed to parse custom headers parameter:', e);
-      }
+    if (req.query.wrap === 'hls') {
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.status(200).send(buildSyntheticLivePlaylist(targetUrl, customHeadersParam));
+      return;
     }
 
     if (!fetchHeaders['Referer'] && !fetchHeaders['referer']) {
-      try {
-        const parsedTarget = new URL(targetUrl);
-        fetchHeaders['Referer'] = `${parsedTarget.protocol}//${parsedTarget.host}/`;
-      } catch {
-        // ignore
-      }
+      fetchHeaders['Referer'] = `${parsedTarget.protocol}//${parsedTarget.host}/`;
+    }
+    if (!fetchHeaders['Origin'] && !fetchHeaders['origin']) {
+      fetchHeaders['Origin'] = `${parsedTarget.protocol}//${parsedTarget.host}`;
     }
 
     if (req.headers.range) {
@@ -93,7 +179,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const response = await fetch(targetUrl, {
-      method: 'GET',
+      method: req.method === 'HEAD' ? 'HEAD' : 'GET',
       headers: fetchHeaders,
       redirect: 'follow',
       signal: controller.signal,
@@ -108,17 +194,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const contentType = response.headers.get('content-type') || '';
     const finalUrl = response.url || targetUrl;
+    const contentLength = response.headers.get('content-length');
+    const contentRange = response.headers.get('content-range');
+    const acceptRanges = response.headers.get('accept-ranges');
 
-    const isM3u8HeaderOrExt =
-      contentType.toLowerCase().includes('mpegurl') ||
-      contentType.toLowerCase().includes('m3u8') ||
-      contentType.toLowerCase().includes('apple') ||
-      targetUrl.toLowerCase().includes('.m3u8') ||
-      finalUrl.toLowerCase().includes('.m3u8') ||
-      targetUrl.includes('play') ||
-      targetUrl.includes('live');
-
-    if (isM3u8HeaderOrExt) {
+    if (shouldInspectAsPlaylist(contentType, targetUrl, finalUrl) && req.method !== 'HEAD') {
       const textContent = await response.text();
       const isActualM3u8 = textContent.includes('#EXTM3U') || textContent.includes('#EXT-X-');
 
@@ -148,16 +228,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.setHeader('Content-Type', 'video/mp4');
     }
 
-    const contentLength = response.headers.get('content-length');
     if (contentLength) res.setHeader('Content-Length', contentLength);
 
-    const contentRange = response.headers.get('content-range');
     if (contentRange) res.setHeader('Content-Range', contentRange);
 
-    const acceptRanges = response.headers.get('accept-ranges');
     if (acceptRanges) res.setHeader('Accept-Ranges', acceptRanges);
+    res.setHeader('Cache-Control', 'public, max-age=10, stale-while-revalidate=30');
 
     res.status(response.status);
+
+    if (req.method === 'HEAD') {
+      res.end();
+      return;
+    }
 
     if (response.body) {
       const nodeStream = Readable.fromWeb(response.body as any);

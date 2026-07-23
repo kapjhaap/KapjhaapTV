@@ -2,6 +2,8 @@ export interface Channel {
   id: string;
   name: string;
   streamUrl: string;
+  backupUrls?: string[];
+  forceHlsWrap?: boolean;
   category: 'Sports' | 'News' | 'Entertainment' | 'Custom';
   logo?: string;
   isCustom?: boolean;
