@@ -671,8 +671,10 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
   }, [hideControls, revealControls, showControls]);
 
   // Auto-hide controls overlay
-  const handleMouseMove = () => {
-    revealControls(false);
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse') {
+      revealControls(false);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -752,7 +754,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
   return (
     <div
       ref={playerContainerRef}
-      onMouseMove={handleMouseMove}
+      onPointerMove={handlePointerMove}
       onMouseLeave={handleMouseLeave}
       className="relative w-full h-full bg-black rounded-2xl overflow-hidden group select-none shadow-2xl flex items-center justify-center border border-white/10"
     >
@@ -776,6 +778,27 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
         }`}
         playsInline
       />
+
+      {/* Always-visible loaded progress */}
+      <div className="absolute inset-x-0 bottom-0 z-10 h-1 bg-white/15 pointer-events-none">
+        {bufferedRanges.map((range, index) => {
+          const startPct = Math.min(100, Math.max(0, (range.start / maxDur) * 100));
+          const endPct = Math.min(100, Math.max(0, (range.end / maxDur) * 100));
+          const widthPct = Math.max(0, endPct - startPct);
+
+          return (
+            <div
+              key={index}
+              style={{ left: `${startPct}%`, width: `${widthPct}%` }}
+              className="absolute top-0 bottom-0 bg-white/45"
+            />
+          );
+        })}
+        <div
+          style={{ width: `${playedPercent}%` }}
+          className="absolute inset-y-0 left-0 bg-red-600"
+        />
+      </div>
 
       {/* ExoPlayer Stats for Nerds Overlay */}
       {showStats && (
