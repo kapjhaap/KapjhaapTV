@@ -308,7 +308,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-ent-tv',
     name: 'SONY ENT TV',
-    streamUrl: 'http://lemon.catchmeifyo.com:8000/pBSgdHZLQS/Mh4RYSF4nJ/158393',
+    streamUrl: 'https://book4u.top/worker/index.php?path=api/bff81131e7/playlist.m3u8',
     forceHlsWrap: true,
     category: 'Entertainment',
     description: 'Sony Entertainment TV live stream',
