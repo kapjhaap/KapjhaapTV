@@ -107,7 +107,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-ent-tv',
     name: 'SONY ENT TV',
-    streamUrl: 'https://stream.ottplus.live/live/sony_ent_hd_abr/index.m3u8',
+    streamUrl: 'https://stream.ottplus.bd/live/sony_ent_hd_abr/index.m3u8',
     useDirectStream: true,
     category: 'Entertainment',
     description: 'Sony Entertainment TV HD live stream',
@@ -123,7 +123,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'and-tv',
     name: 'AND TV',
-    streamUrl: 'https://stream.ottplus.live/live/and_tv_hd_abr/index.m3u8',
+    streamUrl: 'https://stream.ottplus.bd/live/and_tv_hd_abr/index.m3u8',
     useDirectStream: true,
     category: 'Entertainment',
     description: 'And TV HD live stream',
@@ -131,7 +131,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'zee-cinema',
     name: 'ZEE CINEMA',
-    streamUrl: 'https://stream.ottplus.live/live/zee_cinema_hd_abr/index.m3u8',
+    streamUrl: 'https://stream.ottplus.bd/live/zee_cinema_hd_abr/index.m3u8',
     useDirectStream: true,
     category: 'Entertainment',
     description: 'Zee Cinema HD live stream',
@@ -178,7 +178,8 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'star-gold',
     name: 'STAR GOLD',
-    streamUrl: 'http://66.102.126.10:8000/play/a00f/index.m3u8',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=737323&extension=ts&play_token=0XndB21c35',
+    forceHlsWrap: true,
     category: 'Entertainment',
     description: 'Star Gold transport stream wrapped for web playback',
   },
