@@ -225,10 +225,13 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       if (shouldWrapSourceAsHls(rawUrl)) {
         proxyEndpoint += '&wrap=hls';
       }
+      if (channel.forceVideoOnly) {
+        proxyEndpoint += '&videoOnly=1';
+      }
       return proxyEndpoint;
     }
     return rawUrl;
-  }, [channel.forceHlsWrap, channel.httpHeaders, channel.useDirectStream, proxyMode]);
+  }, [channel.forceHlsWrap, channel.forceVideoOnly, channel.httpHeaders, channel.useDirectStream, proxyMode]);
 
   // Load stream in HLS.js or native HTML5 video
   const loadStream = useCallback(function loadChannelStream(sourceIndex = 0) {

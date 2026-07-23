@@ -178,10 +178,9 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'star-gold',
     name: 'STAR GOLD',
-    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=737323&extension=ts&play_token=0XndB21c35',
-    forceHlsWrap: true,
+    streamUrl: 'http://2756d46c.akciatv.ru/iptv/7FRNF6CY9A9TG3/6653/index.m3u8',
     category: 'Entertainment',
-    description: 'Star Gold transport stream wrapped for web playback',
+    description: 'Star Gold live stream',
   },
   {
     id: 'colours-cineplex',
