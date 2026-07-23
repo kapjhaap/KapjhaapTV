@@ -178,9 +178,13 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'star-gold',
     name: 'STAR GOLD',
-    streamUrl: 'http://2756d46c.akciatv.ru/iptv/7FRNF6CY9A9TG3/6653/index.m3u8',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_GOLD_HD.m3u8',
+    backupUrls: [
+      'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_GOLD_2_HD.m3u8',
+      'http://66.102.126.10:8000/play/a00f/index.m3u8',
+    ],
     category: 'Entertainment',
-    description: 'Star Gold live stream',
+    description: 'Star Gold live stream with alternate fallback sources',
   },
   {
     id: 'colours-cineplex',
@@ -256,8 +260,11 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'star-sports',
     name: 'STAR SPORTS 1',
-    streamUrl: 'http://41.205.93.154/STARSPORTS1/index.m3u8',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_SPORTS_1_HD.m3u8',
+    backupUrls: [
+      'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_SPORTS_1_HD_HINDI.m3u8',
+    ],
     category: 'Sports',
-    description: 'Star Sports 1 Live Stream',
+    description: 'Star Sports 1 HD live stream with AAC audio',
   },
 ];
