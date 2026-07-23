@@ -168,9 +168,8 @@ export const INITIAL_CHANNELS: Channel[] = [
     id: 'star-jalsha',
     name: 'STAR JALSHA',
     streamUrl: 'https://yupptvcatchupire.yuppcdn.net/preview/starjalsha/1800.m3u8?hdnts=',
-    forceHlsWrap: true,
     category: 'Entertainment',
-    description: 'Star Jalsha transport stream wrapped for web playback',
+    description: 'Star Jalsha HLS live stream',
   },
   {
     id: 'star-gold',
