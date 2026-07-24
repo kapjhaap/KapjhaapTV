@@ -280,7 +280,6 @@ export const INITIAL_CHANNELS: Channel[] = [
     id: 't-sports backup',
     name: 'T SPORTS BACKUP',
     streamUrl: 'https://mycoffeetime.net/play/tSDRdsaoGGQ2qYgRPDEe9q-qMIzoahbJArH3W3vOiEaB97nXMpWmLb0Ts759Tjsp/m3u8',
-    useDirectStream: true,
     category: 'Sports',
     description: 'T Sports Backup Stream',
   },
