@@ -5,6 +5,7 @@ export const INITIAL_CHANNELS: Channel[] = [
     id: 'btv',
     name: 'BTV',
     streamUrl: 'https://owrcovcrpy.gpcdn.net/bpk-tv/1725/output/index.m3u8',
+    useDirectStream: true,
     category: 'Entertainment',
     description: 'National Television Broadcast Channel',
   },
