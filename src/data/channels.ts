@@ -134,7 +134,7 @@ export const INITIAL_CHANNELS: Channel[] = [
     streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=944622&extension=ts&play_token=i7vUgR4sBu',
     forceHlsWrap: true,
     category: 'Entertainment',
-    description: 'And TV HLS stream',
+    description: 'And TV live stream',
   },
   {
     id: 'zee-cinema',
