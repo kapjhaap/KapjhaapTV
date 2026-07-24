@@ -151,7 +151,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-sab',
     name: 'SONY SAB',
-    streamUrl: 'https://stream.ottplus.bd/live/sub_hd_abr/live/sony_sub_hd_720/chunks.m3u8',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/SONY_SAB_HD.m3u8',
     category: 'Entertainment',
     description: 'Sony SAB HD live stream',
   },
