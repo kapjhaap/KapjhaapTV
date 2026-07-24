@@ -277,6 +277,13 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'PTV Sports live stream',
   },
   {
+    id: 'star-sports',
+    name: 'STAR SPORTS 1',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_SPORTS_1_HD.m3u8',
+    category: 'Sports',
+    description: 'Star Sports 1 HD live stream with AAC audio',
+  },
+  {
     id: 'star-sports-2',
     name: 'STAR SPORTS 2',
     streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_SPORTS_2_HD.m3u8',
@@ -303,12 +310,5 @@ export const INITIAL_CHANNELS: Channel[] = [
     streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_SPORTS_SELECT_2_HD.m3u8',
     category: 'Sports',
     description: 'Star Sports Select 2 HD live stream',
-  },
-  {
-    id: 'star-sports',
-    name: 'STAR SPORTS 1',
-    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_SPORTS_1_HD.m3u8',
-    category: 'Sports',
-    description: 'Star Sports 1 HD live stream with AAC audio',
   },
 ];
