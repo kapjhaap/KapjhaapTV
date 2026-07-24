@@ -290,7 +290,7 @@ export const INITIAL_CHANNELS: Channel[] = [
     streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_SPORTS_3.m3u8',
     useDirectStream: true,
     category: 'Sports',
-    description: 'Star Sports 3 live stream with wrapped fallback source',
+    description: 'Star Sports 3 live stream',
   },
   {
     id: 'star-sports-select-1',
