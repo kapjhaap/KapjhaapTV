@@ -240,12 +240,16 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'National Geographic live stream',
   },
   {
+    id: 'doraemon-tv',
+    name: 'DORAEMON TV',
+    streamUrl: 'https://live20.bozztv.com/giatvplayout7/giatv-209902/tracks-v1a1/mono.ts.m3u8',
+    category: 'Entertainment',
+    description: 'Doraemon TV live stream',
+  },
+  {
     id: 'hungama-tv',
     name: 'HUNGAMA TV',
     streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/HUNGAMA.m3u8',
-    backupUrls: [
-      'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=1433211&extension=ts&play_token=fzIZLPMmD8',
-    ],
     category: 'Entertainment',
     description: 'Hungama TV live stream',
   },
@@ -271,6 +275,14 @@ export const INITIAL_CHANNELS: Channel[] = [
     useDirectStream: true,
     category: 'Sports',
     description: 'T Sports 2 Stream',
+  },
+  {
+    id: 't-sports backup',
+    name: 'T SPORTS BACKUP',
+    streamUrl: 'https://mycoffeetime.net/play/tSDRdsaoGGQ2qYgRPDEe9q-qMIzoahbJArH3W3vOiEaB97nXMpWmLb0Ts759Tjsp/m3u8',
+    useDirectStream: true,
+    category: 'Sports',
+    description: 'T Sports Backup Stream',
   },
   {
     id: 'ptv-sports',
