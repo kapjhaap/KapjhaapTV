@@ -108,9 +108,9 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-aath',
     name: 'SONY AATH',
-    streamUrl: 'https://stream.ottplus.live/live/sony_aath_abr/live/sony_aath_720/chunks.m3u8',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/SONY_8.m3u8',
     category: 'Entertainment',
-    description: 'Sony Aath H.264/AAC live stream',
+    description: 'Sony Aath live stream',
   },
   {
     id: 'sony-ent-tv',
