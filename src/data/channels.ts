@@ -236,11 +236,16 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'Cartoon Network live stream',
   },
   {
-    id: 't-sports-60fps',
-    name: 'T SPORTS 60FPS',
+    id: 't-sports',
+    name: 'T SPORTS',
     streamUrl: 'https://flussonic.deltainfonet.com/01_Tsports_HD/tracks-v1a1/mono.m3u8',
+    backupUrls: [
+      'https://tvsen7.aynascope.net/Sports1/tracks-v1a1/mono.ts.m3u8',
+      'https://flussonic.deltainfonet.com/02_Tsports_HD/tracks-v1a1/mono.m3u8',
+      'https://s1.itcnbd.live/T-Sports-HD/tracks-v1a1/mono.m3u8',
+    ],
     category: 'Sports',
-    description: 'T Sports Ultra High Frame Rate 60FPS Stream',
+    description: 'T Sports Stream with tested backup sources',
   },
   {
     id: 'btv',
