@@ -52,6 +52,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
   const reloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const networkRetryCountRef = useRef<number>(0);
   const mediaRetryCountRef = useRef<number>(0);
+  const bufferStallCountRef = useRef<number>(0);
   const activeSourceIndexRef = useRef<number>(0);
 
   // Player States
@@ -373,6 +374,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     }
     networkRetryCountRef.current = 0;
     mediaRetryCountRef.current = 0;
+    bufferStallCountRef.current = 0;
     activeSourceIndexRef.current = attemptIndex;
 
     setHasError(false);
@@ -532,6 +534,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
           clearTimeout(connectionTimeoutRef.current);
         }
         networkRetryCountRef.current = 0;
+        bufferStallCountRef.current = 0;
       });
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -541,6 +544,13 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
           (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR ||
             data.details === Hls.ErrorDetails.BUFFER_NUDGE_ON_STALL)
         ) {
+          bufferStallCountRef.current += 1;
+          if (hasBackupSource && bufferStallCountRef.current >= 3) {
+            if (tryNextSource('Stream is repeatedly buffering on this source.')) {
+              hls.destroy();
+              return;
+            }
+          }
           hls.startLoad();
           return;
         }

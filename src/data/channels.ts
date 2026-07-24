@@ -121,10 +121,13 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'and-tv',
     name: 'AND TV',
-    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=944622&extension=ts&play_token=i7vUgR4sBu',
-    forceHlsWrap: true,
+    streamUrl: 'https://stream.ottplus.live/live/and_tv_hd_abr/index.m3u8',
+    backupUrls: [
+      'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=944622&extension=ts&play_token=i7vUgR4sBu',
+      'http://line.tivi-one.net/play/live.php?mac=00:1A:79:17:01:63&stream=944622&extension=ts&play_token=gouBa72nUE',
+    ],
     category: 'Entertainment',
-    description: 'And TV transport stream wrapped for web playback',
+    description: 'And TV HLS stream with transport stream fallbacks',
   },
   {
     id: 'zee-cinema',
@@ -185,17 +188,23 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'colours-cineplex',
     name: 'COLOURS CINEPLEX',
-    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=944627&extension=ts&play_token=vkO5UTaxrb',
-    forceHlsWrap: true,
+    streamUrl: 'http://2756d46c.akciatv.ru/iptv/7FRNF6CY9A9TG3/6592/index.m3u8',
+    backupUrls: [
+      'http://goldenpro.xyz/JLKRGUF/PR9A725/72512',
+      'http://goldenpro.xyz/JLKRGUF/PR9A725/1020166',
+    ],
     category: 'Entertainment',
-    description: 'Colours Cineplex transport stream wrapped for web playback',
+    description: 'Colours Cineplex HLS stream with tested backup sources',
   },
   {
     id: 'animal-planet',
     name: 'ANIMAL PLANET',
-    streamUrl: 'http://line.tivi-one.net/play/live.php?mac=00:1A:79:17:01:63&stream=944624&extension=ts&play_token=X7E0KaEwdp',
+    streamUrl: 'http://skylikem.com/live/72497R5Z/XCTWUV1Q/33450.ts',
+    backupUrls: [
+      'http://line.tivi-one.net/play/live.php?mac=00:1A:79:17:01:63&stream=944624&extension=ts&play_token=X7E0KaEwdp',
+    ],
     category: 'Entertainment',
-    description: 'Animal Planet live stream',
+    description: 'Animal Planet AAC-first live stream with fallback source',
   },
   {
     id: 'history-tv',
