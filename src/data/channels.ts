@@ -207,10 +207,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'animal-planet',
     name: 'ANIMAL PLANET',
-    streamUrl: 'http://skylikem.com/live/72497R5Z/XCTWUV1Q/33450.ts',
-    backupUrls: [
-      'http://line.tivi-one.net/play/live.php?mac=00:1A:79:17:01:63&stream=944624&extension=ts&play_token=X7E0KaEwdp',
-    ],
+    streamUrl: 'https://stream.ottplus.bd/live/animal_planet_hd_abr/live/animal_planet_hd/chunks.m3u8',
     category: 'Entertainment',
     description: 'Animal Planet AAC-first live stream with fallback source',
   },
