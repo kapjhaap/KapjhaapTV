@@ -228,7 +228,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'national-geographic',
     name: 'NATIONAL GEOGRAPHIC',
-    streamUrl: 'http://line.tivi-one.net/play/live.php?mac=00:1A:79:17:01:63&stream=373017&extension=ts&play_token=IsE9R5HA3X',
+    streamUrl: 'http://skylikem.com/live/72497R5Z/XCTWUV1Q/33440.ts',
     category: 'Entertainment',
     description: 'National Geographic live stream',
   },
