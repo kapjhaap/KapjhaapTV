@@ -137,7 +137,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'and-tv',
     name: 'AND TV',
-    streamUrl: 'https://stream.ottplus.live/live/and_tv_hd_abr/index.m3u8',
+    streamUrl: 'https://stream.ottplus.live/live/and_tv_hd_abr/live/and_tv_hd_720/chunks.m3u8',
     category: 'Entertainment',
     description: 'And TV HLS stream with transport stream fallbacks',
   },
