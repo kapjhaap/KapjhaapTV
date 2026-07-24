@@ -2,6 +2,13 @@ import { Channel } from '../types';
 
 export const INITIAL_CHANNELS: Channel[] = [
   {
+    id: 'btv',
+    name: 'BTV',
+    streamUrl: 'https://owrcovcrpy.gpcdn.net/bpk-tv/1725/output/index.m3u8',
+    category: 'Entertainment',
+    description: 'National Television Broadcast Channel',
+  },
+  {
     id: 'channel-i',
     name: 'CHANNEL I',
     streamUrl: 'https://owrcovcrpy.gpcdn.net/bpk-tv/1723/output/index.m3u8',
@@ -255,13 +262,6 @@ export const INITIAL_CHANNELS: Channel[] = [
     ],
     category: 'Sports',
     description: 'T Sports Stream with tested backup sources',
-  },
-  {
-    id: 'btv',
-    name: 'BTV',
-    streamUrl: 'http://103.165.93.31:8095/btv/tracks-v1a1/mono.m3u8',
-    category: 'Entertainment',
-    description: 'National Television Broadcast Channel',
   },
   {
     id: 'ptv-sports',
