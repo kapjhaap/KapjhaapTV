@@ -229,6 +229,7 @@ export const INITIAL_CHANNELS: Channel[] = [
     id: 'national-geographic',
     name: 'NATIONAL GEOGRAPHIC',
     streamUrl: 'http://skylikem.com/live/72497R5Z/XCTWUV1Q/33440.ts',
+    forceHlsWrap: true,
     category: 'Entertainment',
     description: 'National Geographic live stream',
   },
