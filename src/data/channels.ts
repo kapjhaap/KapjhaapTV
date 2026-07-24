@@ -277,13 +277,6 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'T Sports 2 Stream',
   },
   {
-    id: 't-sports backup',
-    name: 'T SPORTS BACKUP',
-    streamUrl: 'https://mycoffeetime.net/play/tSDRdsaoGGQ2qYgRPDEe9q-qMIzoahbJArH3W3vOiEaB97nXMpWmLb0Ts759Tjsp/m3u8',
-    category: 'Sports',
-    description: 'T Sports Backup Stream',
-  },
-  {
     id: 'ptv-sports',
     name: 'PTV SPORTS',
     streamUrl: 'https://tvsen7.aynascope.net/Sports1/tracks-v1a1/mono.ts.m3u8',
