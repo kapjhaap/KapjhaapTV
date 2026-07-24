@@ -115,13 +115,6 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-ent-tv',
     name: 'SONY ENT TV',
-    streamUrl: 'https://stream.ottplus.live/live/sony_ent_hd_abr/live/sony_ent_hd_720/chunks.m3u8',
-    category: 'Entertainment',
-    description: 'Sony Entertainment TV live stream',
-  },
-  {
-    id: 'sony-ent-tv2',
-    name: 'SONY ENT HD TV',
     streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=943926&extension=ts&play_token=SnwZyFnNRt',
     forceHlsWrap: true,
     category: 'Entertainment',
@@ -130,9 +123,10 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-max',
     name: 'SONY MAX',
-    streamUrl: 'https://stream.ottplus.bd/live/max_hd_abr/live/max_hd_720/chunks.m3u8',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=373074&extension=ts&play_token=TQU1nUD1Tb',
+    forceHlsWrap: true,
     category: 'Entertainment',
-    description: 'Sony Max HD H.264/AAC live stream',
+    description: 'Sony Max HD live stream',
   },
   {
     id: 'and-tv',
@@ -144,14 +138,16 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'zee-cinema',
     name: 'ZEE CINEMA',
-    streamUrl: 'https://stream.ottplus.live/live/zee_cinema_hd_abr/live/zee_cinema_hd_720/chunks.m3u8',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=735399&extension=ts&play_token=6rebjCGFPu',
+    forceHlsWrap: true,
     category: 'Entertainment',
-    description: 'Zee Cinema HD H.264/AAC live stream',
+    description: 'Zee Cinema HD live stream',
   },
   {
     id: 'sony-sab',
     name: 'SONY SAB',
-    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/SONY_SAB_HD.m3u8',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=944604&extension=ts&play_token=gw4jsYxLfj',
+    forceHlsWrap: true,
     category: 'Entertainment',
     description: 'Sony SAB HD live stream',
   },
@@ -169,7 +165,7 @@ export const INITIAL_CHANNELS: Channel[] = [
     streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=1433162&extension=ts&play_token=7OClLRs313',
     forceHlsWrap: true,
     category: 'Entertainment',
-    description: 'MTV transport stream wrapped for web playback',
+    description: 'MTV stream',
   },
   {
     id: 'star-jalsha-movie',
