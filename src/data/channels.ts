@@ -280,8 +280,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'ptv-sports',
     name: 'PTV SPORTS',
-    streamUrl: 'https://tvsen7.aynascope.net/Sports1/tracks-v1a1/mono.ts.m3u8',
-    useDirectStream: true,
+    streamUrl: 'http://103.165.93.31:8095/ptv/tracks-v1a1/mono.m3u8',
     category: 'Sports',
     description: 'PTV Sports live stream',
   },
