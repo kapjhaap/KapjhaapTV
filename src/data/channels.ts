@@ -223,6 +223,7 @@ export const INITIAL_CHANNELS: Channel[] = [
     id: 'star-movies',
     name: 'STAR MOVIES',
     streamUrl: 'http://rgkkw.live/live/1Aoen7elp5/IgMJ60tmAa/98842.ts',
+    forceHlsWrap: true,
     category: 'Entertainment',
     description: 'STAR MOVIES HD live stream',
   },
