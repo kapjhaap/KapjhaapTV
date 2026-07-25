@@ -213,6 +213,13 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'Colours Cineplex HLS stream',
   },
   {
+    id: 'sony-pix',
+    name: 'SONY PIX',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/SONY_PIX_HD.m3u8',
+    category: 'Entertainment',
+    description: 'SONY PIX live stream',
+  },
+  {
     id: 'animal-planet',
     name: 'ANIMAL PLANET',
     streamUrl: 'http://line.tivi-one.net/play/live.php?mac=00:1A:79:17:01:63&stream=944624&extension=ts&play_token=X7E0KaEwdp',
