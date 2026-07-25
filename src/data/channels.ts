@@ -220,6 +220,13 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'SONY PIX live stream',
   },
   {
+    id: 'star-movies',
+    name: 'STAR MOVIES',
+    streamUrl: 'http://rgkkw.live/live/1Aoen7elp5/IgMJ60tmAa/98842.ts',
+    category: 'Entertainment',
+    description: 'STAR MOVIES HD live stream',
+  },
+  {
     id: 'animal-planet',
     name: 'ANIMAL PLANET',
     streamUrl: 'http://line.tivi-one.net/play/live.php?mac=00:1A:79:17:01:63&stream=944624&extension=ts&play_token=X7E0KaEwdp',
