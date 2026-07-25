@@ -762,15 +762,126 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     setShowAudioMenu(false);
   };
 
+  // Fullscreen state for browsers where the Fullscreen API is unavailable
+  // (notably some iOS Safari/WebKit versions).
+  const [isCssFullscreen, setIsCssFullscreen] = useState<boolean>(false);
+
+  // Keep fullscreen state synchronized with the browser's native fullscreen UI.
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const nativeFullscreen =
+        !!document.fullscreenElement ||
+        !!(document as any).webkitFullscreenElement;
+
+      // If native fullscreen ended, only keep the state true when our CSS
+      // fallback is still active.
+      setIsFullscreen(nativeFullscreen || isCssFullscreen);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    };
+  }, [isCssFullscreen]);
+
   // Fullscreen toggle
-  const toggleFullscreen = () => {
+  const toggleFullscreen = async () => {
     const container = playerContainerRef.current;
+    const video = videoRef.current;
+
     if (!container) return;
 
-    if (!document.fullscreenElement) {
-      container.requestFullscreen().then(() => setIsFullscreen(true)).catch(console.error);
-    } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(console.error);
+    try {
+      // -----------------------------------------
+      // EXIT OUR CSS FULLSCREEN FALLBACK
+      // -----------------------------------------
+      if (isCssFullscreen) {
+        setIsCssFullscreen(false);
+        setIsFullscreen(false);
+        return;
+      }
+
+      // -----------------------------------------
+      // EXIT NATIVE FULLSCREEN
+      // -----------------------------------------
+      const isNativeFullscreen =
+        !!document.fullscreenElement ||
+        !!(document as any).webkitFullscreenElement;
+
+      if (isNativeFullscreen) {
+        if (typeof document.exitFullscreen === 'function') {
+          await document.exitFullscreen();
+        } else if (typeof (document as any).webkitExitFullscreen === 'function') {
+          await (document as any).webkitExitFullscreen();
+        }
+
+        setIsFullscreen(false);
+        return;
+      }
+
+      // -----------------------------------------
+      // STANDARD FULLSCREEN
+      // Desktop + Android + supported browsers
+      // -----------------------------------------
+      if (typeof container.requestFullscreen === 'function') {
+        try {
+          await container.requestFullscreen();
+          setIsFullscreen(true);
+          return;
+        } catch (error) {
+          console.warn('Standard fullscreen failed:', error);
+        }
+      }
+
+      // -----------------------------------------
+      // WEBKIT CONTAINER FULLSCREEN FALLBACK
+      // -----------------------------------------
+      if (typeof (container as any).webkitRequestFullscreen === 'function') {
+        try {
+          await (container as any).webkitRequestFullscreen();
+          setIsFullscreen(true);
+          return;
+        } catch (error) {
+          console.warn('WebKit container fullscreen failed:', error);
+        }
+      }
+
+      // -----------------------------------------
+      // iOS NATIVE VIDEO FULLSCREEN FALLBACK
+      //
+      // This is intentionally a fallback only. If it is available,
+      // iOS may take over playback with its native video UI.
+      // -----------------------------------------
+      if (
+        video &&
+        typeof (video as any).webkitEnterFullscreen === 'function'
+      ) {
+        try {
+          (video as any).webkitEnterFullscreen();
+          setIsFullscreen(true);
+          return;
+        } catch (error) {
+          console.warn('iOS native video fullscreen failed:', error);
+        }
+      }
+
+      // -----------------------------------------
+      // FINAL FALLBACK: CSS FULLSCREEN
+      //
+      // This keeps your custom player controls visible on iOS
+      // when the browser refuses native element fullscreen.
+      // -----------------------------------------
+      setIsCssFullscreen(true);
+      setIsFullscreen(true);
+    } catch (error) {
+      console.error('Fullscreen failed:', error);
+
+      // Last-resort CSS fullscreen fallback.
+      setIsCssFullscreen(true);
+      setIsFullscreen(true);
     }
   };
 
@@ -884,6 +995,22 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, isMuted, skipTime]);
 
+  // Lock page scrolling while the CSS fullscreen fallback is active.
+  useEffect(() => {
+    if (!isCssFullscreen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [isCssFullscreen]);
+
   // Compute CSS objectFit based on selected aspect ratio
   const getVideoObjectFit = (): React.CSSProperties => {
     switch (aspectRatio) {
@@ -912,7 +1039,11 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
       ref={playerContainerRef}
       onPointerMove={handlePointerMove}
       onMouseLeave={handleMouseLeave}
-      className="relative w-full h-full bg-black rounded-2xl overflow-hidden group select-none shadow-2xl flex items-center justify-center border border-white/10"
+      className={`relative w-full h-full bg-black rounded-2xl overflow-hidden group select-none shadow-2xl flex items-center justify-center border border-white/10 ${
+        isCssFullscreen
+          ? '!fixed !inset-0 !z-[99999] !w-screen !h-[100dvh] !max-w-none !max-h-none !rounded-none !border-0'
+          : ''
+      }`}
     >
       {/* Video Element */}
       <video
@@ -1179,7 +1310,7 @@ export const ExoPlayer: React.FC<ExoPlayerProps> = ({
               <button
                 onClick={toggleFullscreen}
                 className="p-1.5 text-gray-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                title="Toggle Fullscreen (F)"
+                title={isFullscreen ? "Exit Fullscreen (F)" : "Enter Fullscreen (F)"}
               >
                 {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
               </button>
