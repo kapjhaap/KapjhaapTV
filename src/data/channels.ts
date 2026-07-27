@@ -123,8 +123,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 'sony-max',
     name: 'SONY MAX',
-    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=373074&extension=ts&play_token=TQU1nUD1Tb',
-    forceHlsWrap: true,
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/SONY_MAX_HD.m3u8',
     category: 'Entertainment',
     description: 'Sony Max HD live stream',
   },
