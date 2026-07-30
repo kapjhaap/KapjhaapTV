@@ -88,6 +88,12 @@ export default function App() {
       <main className="flex-1 max-w-[1700px] w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Video Player Container */}
         <div className="lg:col-span-8 xl:col-span-8 flex flex-col space-y-4">
+          <div className="w-full overflow-hidden rounded-lg bg-gray-900 border border-white/10">
+            <div className="whitespace-nowrap animate-app-ticker py-2.5 px-2 text-sm">
+              Your text goes here
+            </div>
+          </div>
+
           <div className="w-full aspect-video min-h-[300px] sm:min-h-[420px] lg:min-h-[500px]">
             <ExoPlayer
               channel={selectedChannel}
