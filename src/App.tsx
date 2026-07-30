@@ -90,7 +90,7 @@ export default function App() {
         <div className="lg:col-span-8 xl:col-span-8 flex flex-col space-y-4">
           <div className="w-full overflow-hidden rounded-lg bg-gray-900 border border-white/10">
             <div className="whitespace-nowrap animate-app-ticker py-2.5 px-2 text-sm">
-              Your text goes here
+              📺 Due to different URLs and streaming content, some channels may take a little longer to load for browser security reasons. Please wait a moment. 😊 |  বিভিন্ন URL ও স্ট্রিমিং কনটেন্টের কারণে ব্রাউজিং সিকিউরিটির জন্য কিছু চ্যানেল লোড হতে একটু বেশি সময় নিতে পারে। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।
             </div>
           </div>
 
