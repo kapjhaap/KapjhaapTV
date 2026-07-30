@@ -29,5 +29,5 @@
 .animate-app-ticker {
   display: inline-block;
   min-width: 100%;
-  animation: app-ticker 18s linear infinite;
+  animation: app-ticker 25s linear infinite;
 }
