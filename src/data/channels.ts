@@ -168,12 +168,11 @@ export const INITIAL_CHANNELS: Channel[] = [
     description: 'MTV stream',
   },
   {
-    id: 'star-jalsha-movie',
-    name: 'STAR JALSHA MOVIE',
-    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=908656&extension=ts&play_token=hFzzTD1rb8',
-    forceHlsWrap: true,
+    id: 'star-plus',
+    name: 'STAR PLUS',
+    streamUrl: 'https://yowaimo.in/Sflex-ArtlPVT0719/STAR_PLUS_HD.m3u8',
     category: 'Entertainment',
-    description: 'Star Jalsha Movie transport stream wrapped for web playback',
+    description: 'Star Plus HD live stream',
   },
   {
     id: 'star-jalsha',
@@ -182,6 +181,14 @@ export const INITIAL_CHANNELS: Channel[] = [
     useDirectStream: true,
     category: 'Entertainment',
     description: 'Star Jalsha HLS live stream',
+  },
+  {
+    id: 'star-jalsha-movie',
+    name: 'STAR JALSHA MOVIE',
+    streamUrl: 'http://main.light-ott.net/play/live.php?mac=00:1A:79:0B:A0:AE&stream=908656&extension=ts&play_token=hFzzTD1rb8',
+    forceHlsWrap: true,
+    category: 'Entertainment',
+    description: 'Star Jalsha Movie transport stream wrapped for web playback',
   },
   {
     id: 'star-gold 1',
