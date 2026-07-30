@@ -285,7 +285,7 @@ export const INITIAL_CHANNELS: Channel[] = [
   {
     id: 't-sports',
     name: 'T SPORTS',
-    streamUrl: 'https://flussonic.deltainfonet.com/01_Tsports_HD/tracks-v1a1/mono.m3u8',
+    streamUrl: 'https://tvsen3.aynaott.com/Sports1/mono.m3u8',
     useDirectStream: true,
     category: 'Sports',
     description: 'T Sports Stream',
